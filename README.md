@@ -5,6 +5,8 @@ Building algorithm for Wordle
 
 My goal is to build an algorithm that can successfully guess the word in 6 or fewer attempts each day.
 
+The file possible_wordle_words.txt was created by combining and alphabatizing the lists of accepted words and answer words posted by <a href = 'https://gist.github.com/cfreshman'>Cyrus Freshman</a> on his Github. 
+
 ## Dev Tasks
 - Select start word or word after no matches  
 - Pick word from exact matching list (greens only, no yellow)  
