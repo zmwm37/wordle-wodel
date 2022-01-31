@@ -2,8 +2,7 @@
 # Zandr Meitus
 
 import numpy as np
-# test words
-test_words = ['MODEL', 'COUNT', 'NYMPH', 'STAGE', 'TRANCE']
+
 
 class Wodel(object):
     '''
@@ -12,11 +11,12 @@ class Wodel(object):
 
     def __init__(self, possible_words):
         self.possible_words = possible_words
-        self.letter_probs = self.calc_letter_probs(self.possible_words)
-        self.word_scores = self.calc_word_scores(self.letter_probs)
+        self.letter_probs = self.calc_letter_probs()
+        self.word_scores = self.calc_word_scores()
         self.black_letters = {}
         self.yellow_letters = {}
         self.green_lettesr = {}
+        self.last_picked_word = None
 
 
 
@@ -24,37 +24,39 @@ class Wodel(object):
         pass
 
 
-    def calc_letter_probs(self, possible_words):
+    def calc_letter_probs(self):
         '''
         '''
-    #def calc_letter_probs(possible_words):
-        
-        word_arrays = []
-        word_sets = []
+        letter_index = {}
+        letter_position_index = {}
         letter_counts = {}
-        for word in possible_words:
-            word_array = []
-            word_set = set()
-            for i,letter in enumerate(word):
-                word_set.add(letter)
-                word_array.append(letter)
-            
-                if i == len(word) - 1:
-                    word_arrays.append(word_array)
-                    word_sets.append(word_set)
+        for i, word in enumerate(self.possible_words):
+            for j,letter in enumerate(word):
 
+                if letter not in letter_index:
+                    letter_index[letter] = {i}
+                else:
+                    letter_index[letter].add(i)
+                
+                lp = letter + str(j)
+                if lp not in letter_position_index:
+                    letter_position_index[lp] = {i}
+                else:
+                    letter_position_index[lp].add(i)
+
+                # dictionary of letter counts for speed of access?
                 if letter not in letter_counts:
                     letter_counts[letter] = 1
                 else:
-                    letter_counts[letter] = letter_counts[letter] + 1
+                    letter_counts[letter] += 1
         
-        return (word_arrays, word_sets, letter_counts)
+        return (letter_index, letter_position_index, letter_counts)
     
 
-    def calc_word_scores(self, word_tuple):
-        word_arrays, word_sets, letter_counts = word_tuple
+    def calc_word_scores(self):
+        _, _, letter_counts = self.letter_probs
         scores = []
-        for word in word_arrays:
+        for word in self.possible_words:
             word_score = 0
             for letter in word:
                 word_score += letter_counts[letter]
@@ -72,12 +74,66 @@ class Wodel(object):
         
         return self.last_picked_word
 
+
+    def compare_answer(self, answer):
+        '''
+        Compare the last picked word to the answer.
+        '''
+        fb = ''
+        for i, letter in self.last_picked_word:
+            if letter not in answer:
+                fb += 'b'
+            elif letter != answer[i]:
+                fb += 'y'
+            else:
+                fb += 'g'
+        
+        return fb
+
     
-    #def filter_words(self,...):
-    #    '''
-    #    Filter possible words by Wordle feedback of black/yellow/green
-    #    '''
-    #    pass
+    def filter_words(self, feedback):
+        '''
+        Filter possible words by Wordle feedback of black/yellow/green
+
+        Inputs:
+            feedback: string of length 5 consisting of 'b', 'y', and 'g':
+                'b': letter not in word
+                'y': letter in word, but not in correct position
+                'g': letter in word and in correct position
+        '''
+    #    Create two dictionaries: one of letter keys and list of word index values,
+    #    the other of letter-position keys(e.g. S2, A0) and list of word index values.
+    #    These can be used to more quickly filter possible words.
+        letter_index, letter_position_index, letter_counts = self.letter_probs
+        remaining_index = range(len(self.possible_words)) 
+        print('remaining words', remaining_index)
+        for i, letter in enumerate(feedback):
+            picked_letter = self.last_picked_word[i]
+            picked_lp = picked_letter + str(i)
+            if letter == 'b':
+                print(i, 'B GATE', letter)
+                exclude = letter_index[picked_letter]
+                remaining_index = \
+                    [i for i in remaining_index if i not in exclude]
+                print('remaining words', remaining_index)
+            elif letter == 'y':
+                print(i, 'Y GATE', letter)
+                exclude = letter_position_index[picked_lp]
+                include = letter_index[picked_letter]
+                remaining_index = [i for i in remaining_index \
+                    if i in include and i not in exclude]
+                print('remaining words', remaining_index)
+            elif letter == 'g':
+                print(i, 'G GATE', letter)
+                include = letter_position_index[picked_lp]
+                remaining_index = [i for i in remaining_index if i in include]
+                print('remaining words', remaining_index)
+        
+        self.possible_words = [self.possible_words[i] for i in remaining_index]
+        self.letter_probs = self.calc_letter_probs()
+        self.word_scores = self.calc_word_scores()
+
+
 
 
                 
