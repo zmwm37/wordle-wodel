@@ -33,38 +33,37 @@ class Wodel(object):
         letter_index = {}
         letter_position_index = {}
         letter_counts = {}
+        lp_counts = {}
         for i, word in enumerate(self.possible_words):
             for j,letter in enumerate(word):
 
                 if letter not in letter_index:
                     letter_index[letter] = {i}
+                    letter_counts[letter] = 1
                 else:
                     letter_index[letter].add(i)
+                    letter_counts[letter] += 1
                 
                 lp = letter + str(j)
                 if lp not in letter_position_index:
                     letter_position_index[lp] = {i}
+                    lp_counts[lp] = 1
                 else:
                     letter_position_index[lp].add(i)
-
-                # dictionary of letter counts for speed of access?
-                if letter not in letter_counts:
-                    letter_counts[letter] = 1
-                else:
-                    letter_counts[letter] += 1
+                    lp_counts[lp] += 1
         
-        return (letter_index, letter_position_index, letter_counts)
+        return (letter_index, letter_position_index, lp_counts, letter_counts)
     
 
     def calc_word_scores(self):
-        _, _, letter_counts = self.letter_probs
+        _, _, lp_counts, letter_counts = self.letter_probs
         scores = []
         for word in self.possible_words:
             word_score = 0
             uni_letters = set()
-            for letter in word:
-                word_score += letter_counts[letter]
-                if self.model_type != 'basic': 
+            for i, letter in enumerate(word):
+                word_score += letter_counts[letter] + lp_counts[letter + str(i)]
+                if self.model_type != 'basic': # small weights for unique letters
                     if letter not in uni_letters:
                         word_score += 1
                     uni_letters.add(letter)
@@ -119,7 +118,7 @@ class Wodel(object):
     #    Create two dictionaries: one of letter keys and list of word index values,
     #    the other of letter-position keys(e.g. S2, A0) and list of word index values.
     #    These can be used to more quickly filter possible words.
-        letter_index, letter_position_index, letter_counts = self.letter_probs
+        letter_index, letter_position_index, _, _ = self.letter_probs
         remaining_index = range(len(self.possible_words)) 
        # print('remaining words', remaining_index)
         for i, letter in enumerate(feedback):
