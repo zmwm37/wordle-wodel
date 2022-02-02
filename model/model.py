@@ -9,15 +9,18 @@ class Wodel(object):
 
     '''
 
-    def __init__(self, possible_words):
+    def __init__(self, possible_words, model = 'basic',round_limit = None):
         self.possible_words = possible_words
+        self.model_type = model
         self.letter_probs = self.calc_letter_probs()
         self.word_scores = self.calc_word_scores()
         self.black_letters = {}
         self.yellow_letters = {}
         self.green_lettesr = {}
         self.last_picked_word = None
-
+        self.rounds_completed = 0
+        self.round_fb = {}
+        self.picked_words = []
 
 
     def __repr__(self):
@@ -58,8 +61,13 @@ class Wodel(object):
         scores = []
         for word in self.possible_words:
             word_score = 0
+            uni_letters = set()
             for letter in word:
                 word_score += letter_counts[letter]
+                if self.model_type != 'basic': 
+                    if letter not in uni_letters:
+                        word_score += 1
+                    uni_letters.add(letter)
             scores.append(word_score)
         
         return scores
@@ -71,6 +79,8 @@ class Wodel(object):
         '''
         max_score_index = np.argmax(self.word_scores)
         self.last_picked_word = self.possible_words[max_score_index]
+        self.picked_words.append(self.last_picked_word)
+        self.rounds_completed += 1
         
         return self.last_picked_word
 
@@ -80,13 +90,18 @@ class Wodel(object):
         Compare the last picked word to the answer.
         '''
         fb = ''
-        for i, letter in self.last_picked_word:
+        for i, letter in enumerate(self.last_picked_word):
             if letter not in answer:
                 fb += 'b'
             elif letter != answer[i]:
                 fb += 'y'
             else:
                 fb += 'g'
+        self.round_fb[self.rounds_completed] = fb
+        #if fb == 'ggggg':
+            #print('Winning word', self.last_picked_word)
+            #print('Won in {} rounds'.format(self.rounds_completed))
+            #print('All words selected:', self.picked_words)
         
         return fb
 
@@ -106,28 +121,28 @@ class Wodel(object):
     #    These can be used to more quickly filter possible words.
         letter_index, letter_position_index, letter_counts = self.letter_probs
         remaining_index = range(len(self.possible_words)) 
-        print('remaining words', remaining_index)
+       # print('remaining words', remaining_index)
         for i, letter in enumerate(feedback):
             picked_letter = self.last_picked_word[i]
             picked_lp = picked_letter + str(i)
             if letter == 'b':
-                print(i, 'B GATE', letter)
+                #print(i, 'B GATE', letter)
                 exclude = letter_index[picked_letter]
                 remaining_index = \
                     [i for i in remaining_index if i not in exclude]
-                print('remaining words', remaining_index)
+                #print('remaining words', remaining_index)
             elif letter == 'y':
-                print(i, 'Y GATE', letter)
+                #print(i, 'Y GATE', letter)
                 exclude = letter_position_index[picked_lp]
                 include = letter_index[picked_letter]
                 remaining_index = [i for i in remaining_index \
                     if i in include and i not in exclude]
-                print('remaining words', remaining_index)
+                #print('remaining words', remaining_index)
             elif letter == 'g':
-                print(i, 'G GATE', letter)
+                #print(i, 'G GATE', letter)
                 include = letter_position_index[picked_lp]
                 remaining_index = [i for i in remaining_index if i in include]
-                print('remaining words', remaining_index)
+                #print('remaining words', remaining_index)
         
         self.possible_words = [self.possible_words[i] for i in remaining_index]
         self.letter_probs = self.calc_letter_probs()
