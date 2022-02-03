@@ -32,17 +32,23 @@ class Wodel(object):
         '''
         letter_index = {}
         letter_position_index = {}
+        letter_word_counts = {}
         letter_counts = {}
         lp_counts = {}
         for i, word in enumerate(self.possible_words):
+            unique_letters = set()
             for j,letter in enumerate(word):
-
                 if letter not in letter_index:
                     letter_index[letter] = {i}
                     letter_counts[letter] = 1
+                    letter_word_counts[letter] = 1
                 else:
                     letter_index[letter].add(i)
                     letter_counts[letter] += 1
+                    if letter not in unique_letters:
+                        letter_word_counts[letter] += 1
+                unique_letters.add(letter)
+                    
                 
                 lp = letter + str(j)
                 if lp not in letter_position_index:
@@ -52,21 +58,32 @@ class Wodel(object):
                     letter_position_index[lp].add(i)
                     lp_counts[lp] += 1
         
-        return (letter_index, letter_position_index, lp_counts, letter_counts)
+        return (letter_index, letter_position_index,letter_word_counts,
+            lp_counts, letter_counts)
     
 
     def calc_word_scores(self):
-        _, _, lp_counts, letter_counts = self.letter_probs
+        _, _, lw_counts, lp_counts, letter_counts = self.letter_probs
         scores = []
         for word in self.possible_words:
             word_score = 0
             uni_letters = set()
             for i, letter in enumerate(word):
-                word_score += letter_counts[letter] + lp_counts[letter + str(i)]
-                if self.model_type != 'basic': # small weights for unique letters
+                # score on letter frequency and position letter frequency
+                if self.model_type == 'basic':
+                    word_score += letter_counts[letter] + lp_counts[letter + str(i)]
+                # same as basic with small weight added for number of unique letters
+                elif self.model_type == 'uni_letter':
+                    word_score += letter_counts[letter] + lp_counts[letter + str(i)]
                     if letter not in uni_letters:
                         word_score += 1
                     uni_letters.add(letter)
+                # instead of total letter frequency, use words that letter appears in
+                elif self.model_type == 'word_count':
+                    word_score += lw_counts[letter]
+                # word count plus letter position frequnecy
+                elif self.model_type == 'wc + lp':
+                    word_score += lw_counts[letter] + lp_counts[letter + str(i)]
             scores.append(word_score)
         
         return scores
@@ -118,7 +135,7 @@ class Wodel(object):
     #    Create two dictionaries: one of letter keys and list of word index values,
     #    the other of letter-position keys(e.g. S2, A0) and list of word index values.
     #    These can be used to more quickly filter possible words.
-        letter_index, letter_position_index, _, _ = self.letter_probs
+        letter_index, letter_position_index, _, _, _ = self.letter_probs
         remaining_index = range(len(self.possible_words)) 
        # print('remaining words', remaining_index)
         for i, letter in enumerate(feedback):

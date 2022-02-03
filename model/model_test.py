@@ -3,7 +3,12 @@ from model import Wodel
 # test words
 test_words = ['MODEL', 'COUNT', 'NYMPH', 'STAGE', 'TRACE']
 answer = 'COUNT'
-w = Wodel(test_words)
-w.pick_word()
+w0 = Wodel(test_words)
+w0.pick_word()
+
+test_words = ['ABATE','BREAK', 'COUNT', 'DOUBT', 'EPOCH', 'FLINT', 'GLUED',
+    'HINTS', 'IGLOO']
+answer = 'COUNT'
+w1 = Wodel(test_words)
 
 
