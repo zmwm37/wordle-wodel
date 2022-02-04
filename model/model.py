@@ -60,41 +60,66 @@ class Wodel(object):
         
         return (letter_index, letter_position_index,letter_word_counts,
             lp_counts, letter_counts)
-    
+
 
     def calc_word_scores(self):
-        _, _, lw_counts, lp_counts, letter_counts = self.letter_probs
-        scores = []
-        for word in self.possible_words:
-            word_score = 0
-            uni_letters = set()
-            for i, letter in enumerate(word):
-                # score on letter frequency and position letter frequency
-                if self.model_type == 'basic':
-                    word_score += letter_counts[letter] + lp_counts[letter + str(i)]
-                # same as basic with small weight added for number of unique letters
-                elif self.model_type == 'uni_letter':
-                    word_score += letter_counts[letter] + lp_counts[letter + str(i)]
-                    if letter not in uni_letters:
-                        word_score += 1
+        #_, _, lw_counts, lp_counts, letter_counts = self.letter_probs
+        match_counts = {}
+        scores = {}
+        for i, word in enumerate(self.possible_words):
+            for answer_word in self.possible_words[(i + 1):]:
+                uni_letters = set()
+                for letter in word:
+                    if letter in answer_word and letter not in uni_letters:
+                        if match_counts.get(word) is None:
+                            match_counts[word] = 1
+                        else:
+                            match_counts[word] += 1
+                        
+                        matches = match_counts[word]
+                        scores[word] = matches * (len(self.possible_words) - matches)
+                            
+                        if match_counts.get(answer_word) is None:
+                            match_counts[answer_word] = 1
+                        else:
+                            match_counts[answer_word] += 1
+                        
+                        aw_matches = match_counts[answer_word]
+                        scores[answer_word] = aw_matches * (len(self.possible_words) - aw_matches)
+                            
+                        break
                     uni_letters.add(letter)
-                # instead of total letter frequency, use words that letter appears in
-                elif self.model_type == 'word_count':
-                    word_score += lw_counts[letter]
-                # word count plus letter position frequnecy
-                elif self.model_type == 'wc + lp':
-                    word_score += lw_counts[letter] + lp_counts[letter + str(i)]
-            scores.append(word_score)
-        
+                    
         return scores
+                ## score on letter frequency and position letter frequency
+                #if self.model_type == 'basic':
+                #    word_score += letter_counts[letter] + lp_counts[letter + str(i)]
+                ## same as basic with small weight added for number of unique letters
+                #elif self.model_type == 'uni_letter':
+                #    word_score += letter_counts[letter] + lp_counts[letter + str(i)]
+                #    if letter not in uni_letters:
+                #        word_score += 1
+                #    uni_letters.add(letter)
+                ## instead of total letter frequency, use words that letter appears in
+                #elif self.model_type == 'word_count':
+                #    word_score += lw_counts[letter]
+                ## word count plus letter position frequnecy
+                #elif self.model_type == 'wc + lp':
+                #    word_score += lw_counts[letter] + lp_counts[letter + str(i)]
+            #scores.append(word_score)
+        
+        #return scores
 
     
     def pick_word(self):
         '''
         Pick a word with the highest score
         '''
-        max_score_index = np.argmax(self.word_scores)
-        self.last_picked_word = self.possible_words[max_score_index]
+        if len(self.possible_words) ==  1:
+            self.last_picked_word = self.possible_words[0]
+        else:
+            self.last_picked_word = max(self.word_scores, 
+                key = self.word_scores.get)
         self.picked_words.append(self.last_picked_word)
         self.rounds_completed += 1
         
