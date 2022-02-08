@@ -9,8 +9,8 @@ with open('../data/wordle-answers-alphabetical.txt') as f:
     answers = f.readlines()
 
 pw = [word.rstrip("\n") for word in pw]
-answers = [word.rstrip("\n") for word in answers]
-#answers = ['shard']
+#answers = [word.rstrip("\n") for word in answers[0:10]]
+#answers = ['pleat']
 for type in ['basic','uni_letter','word_count','wc + lp']:
     start = time.time()
     results = []
@@ -30,8 +30,8 @@ for type in ['basic','uni_letter','word_count','wc + lp']:
     end = time.time()
     print('{}: {} answered in {} seconds with average round of {}'.format(type, len(answers),end - start, np.mean(results)))
 
-# 2/3/22 OUTPUT
-#basic: 2315 answered in 126.25859212875366 seconds with average round of 5.374946004319654
-#uni_letter: 2315 answered in 131.40263509750366 seconds with average round of 5.352051835853132
-#word_count: 2315 answered in 116.50977516174316 seconds with average round of 5.729157667386609
-#wc + lp: 2315 answered in 128.64878106117249 seconds with average round of 5.32829373650108
+# 2/8/22 OUTPUT
+#basic: 2315 answered in 187.59355878829956 seconds with average round of 4.377969762419006
+#uni_letter: 2315 answered in 201.57207489013672 seconds with average round of 4.380993520518358
+#word_count: 2315 answered in 171.2969229221344 seconds with average round of 4.567170626349892
+#wc + lp: 2315 answered in 206.07487106323242 seconds with average round of 4.377105831533477

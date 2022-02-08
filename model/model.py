@@ -21,6 +21,7 @@ class Wodel(object):
         self.rounds_completed = 0
         self.round_fb = {}
         self.picked_words = []
+        self.all_fb = []
 
 
     def __repr__(self):
@@ -77,14 +78,14 @@ class Wodel(object):
                     word_score += letter_counts[letter] + lp_counts[letter + str(i)]
                     if letter not in uni_letters:
                         word_score += 1
-                    uni_letters.add(letter)
                 # instead of total letter frequency, use words that letter appears in
                 elif self.model_type == 'word_count':
                     word_score += lw_counts[letter]
                 # word count plus letter position frequnecy
                 elif self.model_type == 'wc + lp':
                     word_score += lw_counts[letter] + lp_counts[letter + str(i)]
-            scores.append(word_score)
+                uni_letters.add(letter)
+            scores.append(word_score * (len(uni_letters)/5))
         
         return scores
 
@@ -114,6 +115,7 @@ class Wodel(object):
             else:
                 fb += 'g'
         self.round_fb[self.rounds_completed] = fb
+        self.all_fb.append(fb)
         #if fb == 'ggggg':
             #print('Winning word', self.last_picked_word)
             #print('Won in {} rounds'.format(self.rounds_completed))
